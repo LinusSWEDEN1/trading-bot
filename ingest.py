@@ -19,7 +19,7 @@ from db import upsert, instrument_id_map, fetch
 def seed_instruments():
     rows = [{k: inst[k] for k in
              ("ticker", "yf_symbol", "name", "market", "currency", "theme", "ai_theme")}
-            | {"is_held": inst["qty"] > 0, "is_watch": True}
+            | {"is_held": inst["qty"] > 0, "is_watch": not inst.get("benchmark", False)}
             for inst in C.INSTRUMENTS]
     upsert("instruments", rows, on_conflict="ticker")
     print(f"seeded {len(rows)} instruments")
