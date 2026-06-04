@@ -32,6 +32,9 @@ def seed_config():
 
 
 def seed_positions():
+    if fetch("paper_positions"):
+        print("positions already seeded — skipping (clear the table to re-seed)")
+        return
     ids = instrument_id_map()
     held = [inst for inst in C.INSTRUMENTS if inst["qty"] > 0]
     strategies = [C.ADVISORY_ID] + C.RACE_STRATEGIES
