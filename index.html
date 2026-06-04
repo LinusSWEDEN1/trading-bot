@@ -218,22 +218,38 @@ async function screener_tab(){
 
 async function race_tab(){
   const el=document.getElementById("race"); el.innerHTML="";
+  const bcol={GSPC:"#5C574C",IXIC:"#9A9183",OMX:"#5C574C"};
   for(const [mk,label] of MARKETS){
     el.insertAdjacentHTML("beforeend", mhead(label+" - indexed to 100 at start"));
     const cid="eq_"+mk, bid="board_"+mk;
-    el.insertAdjacentHTML("beforeend",'<div style="position:relative;height:180px"><canvas id="'+cid+'"></canvas></div>');
+    el.insertAdjacentHTML("beforeend",'<div style="position:relative;height:190px"><canvas id="'+cid+'"></canvas></div>');
     el.insertAdjacentHTML("beforeend",'<div id="'+bid+'" class="mt" style="margin-bottom:14px"></div>');
-    const series={},latest={};
+    const series={},latest={}; let start=null;
     for(const s of RACE){
-      const {data}=await sb.from("portfolio_history").select("*").eq("strategy_id",s).eq("market",mk).order("date",{ascending:true});
+      const {data}=await sb.from("portfolio_history").select("date,value,cash").eq("strategy_id",s).eq("market",mk).order("date",{ascending:true});
       const pts=(data||[]).map(r=>({x:r.date,y:(r.value||0)+(r.cash||0)}));
       const base=pts.length?pts[0].y:0;
       series[s]=base?pts.map(p=>({x:p.x,y:100*p.y/base})):pts;
       latest[s]=series[s].length?series[s][series[s].length-1].y:100;
+      if(pts.length && (!start||pts[0].x<start)) start=pts[0].x;
     }
-    new Chart(document.getElementById(cid),{type:"line",
-      data:{datasets:RACE.map(s=>({label:NAMES[s],data:series[s],borderColor:COLORS[s],
-        borderWidth:s==="you"?2.5:1.5,pointRadius:0,tension:.25,borderDash:s==="you"?[]:[4,3]}))},
+    // benchmark index lines (price-only, indexed to 100 from the same start)
+    const benches=Object.values(instruments).filter(x=>x.theme==="benchmark" && x.market===mk);
+    const bSeries={}, bLatest=[];
+    for(const b of benches){
+      let q=sb.from("prices").select("date,close").eq("instrument_id",b.id).order("date",{ascending:true});
+      if(start) q=q.gte("date",start);
+      const {data}=await q;
+      const pts=(data||[]).map(r=>({x:r.date,y:r.close}));
+      const base=pts.length?pts[0].y:0;
+      bSeries[b.ticker]=base?pts.map(p=>({x:p.x,y:100*p.y/base})):pts;
+      bLatest.push({name:b.name,v:bSeries[b.ticker].length?bSeries[b.ticker][bSeries[b.ticker].length-1].y:100});
+    }
+    const datasets=RACE.map(s=>({label:NAMES[s],data:series[s],borderColor:COLORS[s],
+        borderWidth:s==="you"?2.5:1.5,pointRadius:0,tension:.25,borderDash:s==="you"?[]:[4,3]}))
+      .concat(benches.map(b=>({label:b.name,data:bSeries[b.ticker],borderColor:bcol[b.ticker]||"#5C574C",
+        borderWidth:1.5,pointRadius:0,tension:.25,borderDash:[2,3]})));
+    new Chart(document.getElementById(cid),{type:"line",data:{datasets},
       options:{responsive:true,maintainAspectRatio:false,parsing:false,
         plugins:{legend:{display:false}},
         scales:{x:{type:"category",ticks:{color:"#8E8573",maxTicksLimit:5}},y:{ticks:{color:"#8E8573"}}}}});
@@ -244,8 +260,14 @@ async function race_tab(){
       d.innerHTML='<span>'+(i+1)+'. '+NAMES[s]+'</span><span class="num" style="color:'+(ret>=0?"var(--green)":"var(--red)")+'">'+sign+ret.toFixed(1)+'%</span>';
       board.appendChild(d);
     });
+    bLatest.forEach(b=>{
+      const ret=b.v-100, sign=ret>=0?"+":"";
+      const d=document.createElement("div"); d.className="lead"; d.style.opacity=".7";
+      d.innerHTML='<span class="muted">'+b.name+' (benchmark)</span><span class="num muted">'+sign+ret.toFixed(1)+'%</span>';
+      board.appendChild(d);
+    });
   }
-  if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted">All five begin at 100 and separate as each strategy trades differently - needs several days to mean anything.</p>');
+  if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted">Solid/colored = your strategies; dashed = market index. All indexed to 100 at the start; needs several days to mean anything.</p>');
 }
 
 function show(tab){
