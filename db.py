@@ -34,6 +34,21 @@ def fetch(table: str, **eq) -> list[dict]:
     return q.execute().data
 
 
+def update(table: str, values: dict, **eq):
+    """Partial update of existing rows — use instead of upsert when not all
+    not-null columns are present (e.g. updating only a stop level by id)."""
+    q = db().table(table).update(values)
+    for k, v in eq.items():
+        q = q.eq(k, v)
+    return q.execute()
+
+
+def insert(table: str, rows: list[dict]):
+    if not rows:
+        return
+    return db().table(table).insert(rows).execute()
+
+
 def instrument_id_map() -> dict[str, int]:
     """ticker -> instruments.id"""
     return {r["ticker"]: r["id"] for r in db().table("instruments").select("id,ticker").execute().data}
