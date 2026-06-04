@@ -66,6 +66,7 @@ def _fundamentals(tickers: list[str]):
 def build_features(prices: dict[str, pd.DataFrame]):
     """Returns (features_df, coverage). Computed once, shared by all strategies."""
     pf = _price_factors(prices)
+    pf = pf[~pf.index.isin(C.BENCHMARK_TICKERS)]      # benchmarks are never scored
     fu, status = _fundamentals(list(pf.index))
     feats = pf.join(fu, how="inner")
     cov = {"ok": sum(1 for v in status.values() if v == "ok"),
