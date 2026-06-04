@@ -19,16 +19,16 @@
   .num{font-family:var(--mono)}
   .row{display:flex; align-items:center; justify-content:space-between}
   .muted{color:var(--muted)} .small{font-size:12px} .mt{margin-top:18px}
+  .mhead{font-family:var(--serif); font-size:16px; margin:18px 0 8px; color:var(--txt)}
+  .mhead:first-child{margin-top:6px}
   .banner{border-radius:10px; padding:10px 14px; font-size:13px; margin:12px 0}
   .ok{background:rgba(94,140,90,.14); color:#456b42}
   .warn{background:rgba(169,121,31,.16); color:#7c5a13}
   .halt{background:rgba(184,80,62,.15); color:#8a3424}
-  .seg, .tabs{display:flex; gap:6px}
-  .seg{margin:8px 0 4px} .tabs{margin:14px 0}
-  .seg button, .tabs button{flex:1; background:var(--surface); color:var(--muted);
+  .tabs{display:flex; gap:6px; margin:14px 0}
+  .tabs button{flex:1; background:var(--surface); color:var(--muted);
        border:1px solid var(--line); border-radius:9px; padding:9px 0; font-family:var(--sans);
        font-size:13px; cursor:pointer}
-  .seg button.on{color:var(--txt); border-color:var(--accent); border-width:1.5px}
   .tabs button.on{color:var(--txt); background:#F3ECDD; border-color:var(--accent); border-width:1.5px}
   .settbar{display:flex; align-items:center; justify-content:space-between;
        background:var(--surface); border:1px solid var(--line); border-radius:9px;
@@ -36,34 +36,25 @@
   .sw{width:40px;height:23px;border-radius:12px;position:relative;cursor:pointer;background:#C9BFA9;transition:.15s}
   .sw.on{background:var(--green)} .sw span{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.15s}
   .sw.on span{left:20px}
-  .card{background:var(--surface); border:1px solid var(--line); border-radius:13px;
-        padding:14px 16px; margin-bottom:10px}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:13px; padding:14px 16px; margin-bottom:10px}
   .tag{font-size:11px; padding:3px 9px; border-radius:6px; font-weight:500}
   .b-buy{background:rgba(94,140,90,.16); color:#3c5c39}
   .b-sell{background:rgba(184,80,62,.16); color:#7a2e22}
   .b-hold{background:rgba(142,133,115,.18); color:#5c5647}
   .b-trim{background:rgba(169,121,31,.18); color:#6e4e12}
-  .why{font-size:12px; color:var(--muted); line-height:1.55; margin:8px 0 0;
-       border-top:1px solid var(--line); padding-top:8px}
+  .why{font-size:12px; color:var(--muted); line-height:1.55; margin:8px 0 0; border-top:1px solid var(--line); padding-top:8px}
   .acts{display:flex; gap:8px; margin-top:12px}
-  .acts button{flex:1; background:#F1EADB; color:var(--txt); border:1px solid var(--line);
-       border-radius:9px; padding:9px 0; font-size:13px; font-family:var(--sans); cursor:pointer}
+  .acts button{flex:1; background:#F1EADB; color:var(--txt); border:1px solid var(--line); border-radius:9px; padding:9px 0; font-size:13px; font-family:var(--sans); cursor:pointer}
   .acts button:active{transform:scale(.98)}
-  .lead{display:flex; align-items:center; justify-content:space-between; padding:11px 13px;
-        border-radius:9px; margin-bottom:6px; background:var(--surface); border:1px solid var(--line)}
+  .lead{display:flex; align-items:center; justify-content:space-between; padding:11px 13px; border-radius:9px; margin-bottom:6px; background:var(--surface); border:1px solid var(--line)}
   .lead.you{border-color:var(--accent); border-width:1.5px}
   canvas{max-width:100%} .hide{display:none}
 </style>
 </head>
 <body>
-  <div class="row"><h1>Quant dashboard</h1><span id="status" class="small muted">loading…</span></div>
-  <div id="banner" class="banner ok">checking system…</div>
+  <div class="row"><h1>Quant dashboard</h1><span id="status" class="small muted">loading...</span></div>
+  <div id="banner" class="banner ok">checking system...</div>
   <div id="coverage" class="small muted" style="margin:-4px 0 10px"></div>
-
-  <div class="seg" id="market">
-    <button data-m="US" class="on">US</button>
-    <button data-m="NORDIC">Nordic</button>
-  </div>
 
   <div class="tabs" id="tabs">
     <button data-t="today" class="on">Today</button>
@@ -80,10 +71,7 @@
   <div id="today"></div>
   <div id="positions" class="hide"></div>
   <div id="screener" class="hide"></div>
-  <div id="race" class="hide">
-    <div style="position:relative;height:200px" class="mt"><canvas id="equity"></canvas></div>
-    <div id="board" class="mt"></div>
-  </div>
+  <div id="race" class="hide"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -94,10 +82,13 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const ADVISORY = "advisory";
 const RACE = ["you","magic_formula","rsi2","dual_momentum","canslim"];
 const NAMES = {you:"Your strategy",magic_formula:"Magic Formula",rsi2:"RSI-2",dual_momentum:"Dual Momentum",canslim:"CANSLIM"};
-let market="US", instruments={}, explain=(localStorage.getItem("explain")!=="0");
+const MARKETS = [["US","US"],["NORDIC","Nordic"]];
+const COLORS = {you:"#C15F3C",magic_formula:"#5E8C5A",rsi2:"#A9791F",dual_momentum:"#8A5A8C",canslim:"#5A7A8C"};
+let instruments={}, explain=(localStorage.getItem("explain")!=="0");
 const today=new Date().toISOString().slice(0,10);
 const cls=s=>({BUY:"b-buy",SELL:"b-sell",HOLD:"b-hold",TRIM:"b-trim"}[s]||"b-hold");
-const kr=n=>(n==null?"–":Math.round(n).toLocaleString("sv-SE"));
+const kr=n=>(n==null?"-":Math.round(n).toLocaleString("sv-SE"));
+const mhead=l=>'<div class="mhead">'+l+'</div>';
 
 async function loadInstruments(){
   const {data}=await sb.from("instruments").select("*");
@@ -110,109 +101,151 @@ async function status(){
   const r=(data||[])[0], b=document.getElementById("banner"), cov=document.getElementById("coverage");
   document.getElementById("status").textContent=r?new Date(r.ran_at).toLocaleString("sv-SE"):"no runs yet";
   if(!r){b.textContent="No runs recorded yet.";cov.textContent="";return;}
-  if(r.halted){b.className="banner halt";b.textContent="⚠ Halted: "+(r.halt_reason||"unknown");cov.textContent="";return;}
+  if(r.halted){b.className="banner halt";b.textContent="Halted: "+(r.halt_reason||"unknown");cov.textContent="";return;}
   const f=r.feeds||{}, p=feedNum(f.prices), fu=feedNum(f.fundamentals);
-  cov.textContent="used "+Object.entries(f).map(([k,v])=>k.replace("alt:","")+" "+v).join(" · ");
-  if(p && p[0]<p[1]){ b.className="banner warn"; b.textContent="Running on partial prices — "+(p[1]-p[0])+" name(s) skipped today"; }
-  else if(fu && fu[0]<fu[1]){ b.className="banner ok"; b.textContent="System healthy · "+(fu[1]-fu[0])+" fundamental(s) thin, scored neutral"; }
-  else { b.className="banner ok"; b.textContent="System healthy · all metrics available"; }
+  cov.textContent="used "+Object.entries(f).map(([k,v])=>k.replace("alt:","")+" "+v).join(" \u00b7 ");
+  if(p && p[0]<p[1]){ b.className="banner warn"; b.textContent="Running on partial prices - "+(p[1]-p[0])+" name(s) skipped today"; }
+  else if(fu && fu[0]<fu[1]){ b.className="banner ok"; b.textContent="System healthy \u00b7 "+(fu[1]-fu[0])+" fundamental(s) thin, scored neutral"; }
+  else { b.className="banner ok"; b.textContent="System healthy \u00b7 all metrics available"; }
 }
 
-function caption(r){
-  const rat=r.rationale||{};
-  if(r.signal==="BUY"){
-    let c="Buy up to "+kr(r.limit_price)+" — a limit order, so it fills only at that price or lower. ";
-    c+="Size "+(r.target_size_pct||"")+"% of the book"+(rat.chunky?" (chunky — one share is large for your target, but your call). ":". ");
-    c+="Stop "+kr(r.stop_level)+" — sells automatically if it falls that far from its high. ";
-    c+="Score "+(r.composite_score?.toFixed(2))+" — combined signal strength (0–1; acts above ~0.60).";
-    return c;
-  }
-  if(r.signal==="TRIM") return "This position is above your "+(r.target_size_pct||5)+"% size target — consider reducing toward it. It's a flag, not a rush; tap when you act. Score "+(r.composite_score?.toFixed(2))+" is how strong the stock still ranks.";
-  if(r.signal==="SELL") return "Trailing stop hit — it fell from its high by your stop distance, so the rule says exit.";
-  return "Holding — no change today. Score "+(r.composite_score?.toFixed(2))+" (0–1).";
+const FNAME={momentum:"momentum",value:"value",quality:"quality",low_vol:"low volatility",trend:"trend",fwd_cashflow:"forward cash-flow"};
+function drivers(fs){
+  if(!fs) return {pos:[],neg:[]};
+  const keys=["momentum","value","quality","low_vol","trend","fwd_cashflow"];
+  const arr=keys.map(k=>[FNAME[k],fs[k]]).filter(x=>x[1]!=null).sort((a,b)=>b[1]-a[1]);
+  return {pos:arr.filter(x=>x[1]>0.3).slice(0,2).map(x=>x[0]),
+          neg:arr.filter(x=>x[1]<-0.3).slice(-1).map(x=>x[0])};
+}
+const listify=a=>a.length===2?a[0]+" and "+a[1]:(a[0]||"");
+
+function whyParagraph(r,fs){
+  const d=drivers(fs), rat=r.rationale||{};
+  const strong=d.pos.length?"It ranks high on "+listify(d.pos):"Its factor signals are mixed";
+  const drag=d.neg.length?(", though "+listify(d.neg)+" is weak"):"";
+  if(r.signal==="BUY")
+    return strong+drag+". The blended score cleared your buy threshold, so it is flagged as a buy"+
+      (rat.chunky?" - note one share is large versus your size target, so it is a chunky add you decide on.":".");
+  if(r.signal==="TRIM")
+    return strong+drag+". It still ranks well, but "+(rat.reason||"it exceeds your size target")+
+      ", so the suggestion is to trim back toward target"+(rat.lumpy?" - it is a lumpy position, so trimming has real impact.":".");
+  if(r.signal==="SELL")
+    return "Its trailing stop was hit - the price fell from its recent high by your stop distance - so the rule says exit, regardless of the factor view.";
+  if(rat.blocked)
+    return strong+drag+", but buying more would push your AI theme past its cap, so it is held rather than bought.";
+  return strong+drag+", which nets out to no change today.";
+}
+
+function numbersHelp(r){
+  let c="";
+  if(r.limit_price!=null) c+="Limit "+kr(r.limit_price)+" - fills only at that price or lower. ";
+  if(r.stop_level!=null) c+="Stop "+kr(r.stop_level)+" - sells if it falls that far from its high. ";
+  if(r.target_size_pct) c+="Target size "+r.target_size_pct+"% of the book. ";
+  c+="Score "+(r.composite_score!=null?r.composite_score.toFixed(2):"-")+" is the 0-1 rank (acts above ~0.60).";
+  return c;
+}
+
+function recCard(r,i,fs){
+  return '<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
+    '<span class="tag '+cls(r.signal)+'">'+r.signal+'</span></div>'+
+    '<p class="small muted" style="margin:6px 0 0">score <span class="num">'+(r.composite_score!=null?r.composite_score.toFixed(2):"-")+
+      '</span> \u00b7 limit <span class="num">'+kr(r.limit_price)+'</span> \u00b7 stop <span class="num">'+kr(r.stop_level)+'</span></p>'+
+    '<p class="why">'+whyParagraph(r,fs)+(explain?' '+numbersHelp(r):"")+'</p>'+
+    (["BUY","SELL","TRIM"].includes(r.signal)?
+      '<div class="acts"><button onclick="act('+r.instrument_id+",'done',1)\">I did it</button>"+
+      '<button onclick="act('+r.instrument_id+",'skipped',0)\">Skipped</button></div>":"");
 }
 
 async function today_tab(){
   const el=document.getElementById("today"); el.innerHTML="";
   const {data}=await sb.from("recommendations").select("*").eq("strategy_id",ADVISORY).eq("date",today);
-  const recs=(data||[]).filter(r=>(instruments[r.instrument_id]||{}).market===market)
-                       .sort((a,b)=>b.composite_score-a.composite_score);
-  if(!recs.length){el.innerHTML='<p class="muted small">No recommendations for '+market+' today.</p>';return;}
-  recs.forEach(r=>{
-    const i=instruments[r.instrument_id]||{};
-    const card=document.createElement("div"); card.className="card";
-    card.innerHTML=
-      '<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
-      '<span class="tag '+cls(r.signal)+'">'+r.signal+'</span></div>'+
-      '<p class="small muted" style="margin:6px 0 0">score <span class="num">'+(r.composite_score?.toFixed(2))+
-        '</span> · limit <span class="num">'+kr(r.limit_price)+'</span> · stop <span class="num">'+kr(r.stop_level)+'</span></p>'+
-      (explain?'<p class="why">'+caption(r)+'</p>':"")+
-      (['BUY','SELL','TRIM'].includes(r.signal)?
-        '<div class="acts"><button onclick="act('+r.instrument_id+",'done',1)\">I did it</button>"+
-        '<button onclick="act('+r.instrument_id+",'skipped',0)\">Skipped</button></div>":"");
-    el.appendChild(card);
-  });
+  const fsRows=(await sb.from("factor_scores").select("*").eq("date",today)).data||[];
+  const fsMap={}; fsRows.forEach(s=>fsMap[s.instrument_id]=s);
+  const all=data||[]; let any=false;
+  for(const [mk,label] of MARKETS){
+    const recs=all.filter(r=>(instruments[r.instrument_id]||{}).market===mk).sort((a,b)=>b.composite_score-a.composite_score);
+    if(!recs.length) continue; any=true;
+    el.insertAdjacentHTML("beforeend", mhead(label));
+    recs.forEach(r=>{ const c=document.createElement("div"); c.className="card"; c.innerHTML=recCard(r,instruments[r.instrument_id]||{},fsMap[r.instrument_id]); el.appendChild(c); });
+  }
+  if(!any) el.innerHTML='<p class="muted small">No recommendations today.</p>';
 }
 async function act(iid,acted,qty){
   await sb.from("user_actions").insert({instrument_id:iid,rec_date:today,acted,qty});
-  alert(acted==="done"?"Logged — holdings update on the next run.":"Marked as skipped.");
+  alert(acted==="done"?"Logged - holdings update on the next run.":"Marked as skipped.");
 }
 
 async function positions_tab(){
   const el=document.getElementById("positions"); el.innerHTML="";
-  const {data}=await sb.from("paper_positions").select("*")
-    .eq("strategy_id",ADVISORY).eq("status","open").eq("market",market);
-  (data||[]).forEach(p=>{
-    const i=instruments[p.instrument_id]||{};
-    const dist=(p.stop_level&&p.high_water)?Math.round(100*(p.high_water-p.stop_level)/p.high_water):null;
-    const c=document.createElement("div"); c.className="card";
-    c.innerHTML='<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
-      '<div style="text-align:right"><div class="num">'+(p.qty||0)+' sh</div>'+
-      '<div class="small" style="'+(dist!=null&&dist<5?"color:var(--amber)":"color:var(--muted)")+'">'+
-      (dist!=null?dist+"% to stop":"")+'</div></div></div>';
-    el.appendChild(c);
-  });
-  if(!el.innerHTML) el.innerHTML='<p class="muted small">No '+market+' positions.</p>';
+  const {data}=await sb.from("paper_positions").select("*").eq("strategy_id",ADVISORY).eq("status","open");
+  const all=data||[]; let any=false;
+  for(const [mk,label] of MARKETS){
+    const ps=all.filter(p=>p.market===mk);
+    if(!ps.length) continue; any=true;
+    el.insertAdjacentHTML("beforeend", mhead(label));
+    if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted" style="margin:0 0 8px">Number on the right = how far price can fall from its recent high before the trailing stop sells. Amber means it is close.</p>');
+    ps.forEach(p=>{
+      const i=instruments[p.instrument_id]||{};
+      const dist=(p.stop_level&&p.high_water)?Math.round(100*(p.high_water-p.stop_level)/p.high_water):null;
+      const c=document.createElement("div"); c.className="card";
+      c.innerHTML='<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
+        '<div style="text-align:right"><div class="num">'+(p.qty||0)+' sh</div>'+
+        '<div class="small" style="'+(dist!=null&&dist<5?"color:var(--amber)":"color:var(--muted)")+'">'+(dist!=null?dist+"% to stop":"")+'</div></div></div>';
+      el.appendChild(c);
+    });
+  }
+  if(!any) el.innerHTML='<p class="muted small">No open positions.</p>';
 }
 
 async function screener_tab(){
-  const el=document.getElementById("screener"); el.innerHTML='<p class="small muted">whole universe by score</p>';
+  const el=document.getElementById("screener"); el.innerHTML="";
+  if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted">Factor strength - sigma above/below the universe average. Unbounded (can exceed 1 or go negative); not the 0-1 rank on the Today cards.</p>');
   const {data}=await sb.from("factor_scores").select("*").eq("date",today).order("composite",{ascending:false});
-  (data||[]).filter(s=>(instruments[s.instrument_id]||{}).market===market).forEach(s=>{
-    const i=instruments[s.instrument_id]||{};
-    const d=document.createElement("div"); d.className="lead";
-    d.innerHTML='<span>'+(i.name||"")+' <span class="small muted">'+(i.ticker||"")+'</span></span>'+
-      '<span class="num">'+(s.composite?.toFixed(2)??"–")+'</span>';
-    el.appendChild(d);
-  });
+  const all=data||[];
+  for(const [mk,label] of MARKETS){
+    const ss=all.filter(s=>(instruments[s.instrument_id]||{}).market===mk);
+    if(!ss.length) continue;
+    el.insertAdjacentHTML("beforeend", mhead(label));
+    ss.forEach(s=>{
+      const i=instruments[s.instrument_id]||{};
+      const d=document.createElement("div"); d.className="lead";
+      d.innerHTML='<span>'+(i.name||"")+' <span class="small muted">'+(i.ticker||"")+'</span></span>'+
+        '<span class="num">'+(s.composite!=null?s.composite.toFixed(2):"-")+'</span>';
+      el.appendChild(d);
+    });
+  }
 }
 
 async function race_tab(){
-  const board=document.getElementById("board"); board.innerHTML="";
-  const series={},latest={};
-  for(const s of RACE){
-    const {data}=await sb.from("portfolio_history").select("*")
-      .eq("strategy_id",s).eq("market",market).order("date",{ascending:true});
-    const pts=(data||[]).map(r=>({x:r.date,y:(r.value||0)+(r.cash||0)}));
-    const base=pts.length?pts[0].y:0;
-    series[s]=base?pts.map(p=>({x:p.x,y:100*p.y/base})):pts;   // indexed to 100
-    latest[s]=series[s].length?series[s][series[s].length-1].y:100;
+  const el=document.getElementById("race"); el.innerHTML="";
+  for(const [mk,label] of MARKETS){
+    el.insertAdjacentHTML("beforeend", mhead(label+" - indexed to 100 at start"));
+    const cid="eq_"+mk, bid="board_"+mk;
+    el.insertAdjacentHTML("beforeend",'<div style="position:relative;height:180px"><canvas id="'+cid+'"></canvas></div>');
+    el.insertAdjacentHTML("beforeend",'<div id="'+bid+'" class="mt" style="margin-bottom:14px"></div>');
+    const series={},latest={};
+    for(const s of RACE){
+      const {data}=await sb.from("portfolio_history").select("*").eq("strategy_id",s).eq("market",mk).order("date",{ascending:true});
+      const pts=(data||[]).map(r=>({x:r.date,y:(r.value||0)+(r.cash||0)}));
+      const base=pts.length?pts[0].y:0;
+      series[s]=base?pts.map(p=>({x:p.x,y:100*p.y/base})):pts;
+      latest[s]=series[s].length?series[s][series[s].length-1].y:100;
+    }
+    new Chart(document.getElementById(cid),{type:"line",
+      data:{datasets:RACE.map(s=>({label:NAMES[s],data:series[s],borderColor:COLORS[s],
+        borderWidth:s==="you"?2.5:1.5,pointRadius:0,tension:.25,borderDash:s==="you"?[]:[4,3]}))},
+      options:{responsive:true,maintainAspectRatio:false,parsing:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{type:"category",ticks:{color:"#8E8573",maxTicksLimit:5}},y:{ticks:{color:"#8E8573"}}}}});
+    const board=document.getElementById(bid);
+    Object.entries(latest).sort((a,b)=>b[1]-a[1]).forEach(([s,v],i)=>{
+      const d=document.createElement("div"); d.className="lead"+(s==="you"?" you":"");
+      const ret=v-100, sign=ret>=0?"+":"";
+      d.innerHTML='<span>'+(i+1)+'. '+NAMES[s]+'</span><span class="num" style="color:'+(ret>=0?"var(--green)":"var(--red)")+'">'+sign+ret.toFixed(1)+'%</span>';
+      board.appendChild(d);
+    });
   }
-  const colors={you:"#C15F3C",magic_formula:"#5E8C5A",rsi2:"#A9791F",dual_momentum:"#8A5A8C",canslim:"#5A7A8C"};
-  new Chart(document.getElementById("equity"),{type:"line",
-    data:{datasets:RACE.map(s=>({label:NAMES[s],data:series[s],borderColor:colors[s],
-      borderWidth:s==="you"?2.5:1.5,pointRadius:0,tension:.25,borderDash:s==="you"?[]:[4,3]}))},
-    options:{responsive:true,maintainAspectRatio:false,parsing:false,
-      plugins:{legend:{display:false},title:{display:true,text:market+" — indexed to 100 at start",
-        color:"#8E8573",font:{size:11}}},
-      scales:{x:{type:"category",ticks:{color:"#8E8573",maxTicksLimit:5}},y:{ticks:{color:"#8E8573"}}}}});
-  Object.entries(latest).sort((a,b)=>b[1]-a[1]).forEach(([s,v],i)=>{
-    const d=document.createElement("div"); d.className="lead"+(s==="you"?" you":"");
-    const ret=(v-100); const sign=ret>=0?"+":"";
-    d.innerHTML='<span>'+(i+1)+'. '+NAMES[s]+'</span><span class="num" style="color:'+
-      (ret>=0?"var(--green)":"var(--red)")+'">'+sign+ret.toFixed(1)+'%</span>';
-    board.appendChild(d);
-  });
+  if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted">All five begin at 100 and separate as each strategy trades differently - needs several days to mean anything.</p>');
 }
 
 function show(tab){
@@ -221,14 +254,10 @@ function show(tab){
 }
 document.getElementById("tabs").onclick=e=>{if(e.target.dataset.t){
   [...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b===e.target)); show(e.target.dataset.t);}};
-document.getElementById("market").onclick=e=>{if(e.target.dataset.m){
-  market=e.target.dataset.m;
-  [...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b===e.target));
-  show(document.querySelector("#tabs .on").dataset.t);}};
 document.getElementById("exsw").onclick=e=>{
   explain=!explain; localStorage.setItem("explain",explain?"1":"0");
   e.currentTarget.classList.toggle("on",explain);
-  if(document.querySelector("#tabs .on").dataset.t==="today") today_tab();
+  show(document.querySelector("#tabs .on").dataset.t);
 };
 if(!explain) document.getElementById("exsw").classList.remove("on");
 
