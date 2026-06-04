@@ -67,6 +67,8 @@ RISK_CONFIG_DEFAULT = {
     "reentry_cooldown_days": 5,
     "min_courtage_pct_of_trade": 0.30,  # cost-aware entry gate
     "explain_numbers": True,            # plain-English captions on the numbers
+    "portfolio_limits": True,           # TRIM/theme-cap on the advisory book; set
+                                        # false if you size positions yourself
     "funds_tech_share_pct": 50,         # your funds are a mix -> est. tech share
 }
 
