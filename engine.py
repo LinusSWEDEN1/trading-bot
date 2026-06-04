@@ -17,10 +17,11 @@ import numpy as np
 import pandas as pd
 
 import config as C
-from db import db, upsert, fetch, instrument_id_map
+from db import db, upsert, update, insert, fetch, instrument_id_map
 from altdata import macro_regime
 
 TODAY = str(dt.date.today())
+_MARKET = {i["ticker"]: i["market"] for i in C.INSTRUMENTS}
 
 
 # ---------- helpers ----------
@@ -82,8 +83,9 @@ def _portfolio(strategy_id, prices, score, cfg, ids, info_by_ticker, advisory):
         price = last[t]
         hw = max(p.get("high_water") or price, price)
         stop = hw * (1 - cfg["trailing_stop_atr_mult"] * _atr_pct(prices[t]))
-        upsert("paper_positions", [{"id": p["id"], "high_water": round(hw, 4),
-                                    "stop_level": round(stop, 4)}])
+        update("paper_positions",
+               {"high_water": round(hw, 4), "stop_level": round(stop, 4)},
+               id=p["id"])
         if price <= stop:
             recs.append(_rec(strategy_id, iid, "SELL", score.get(t, 0), price, stop,
                              0, {"reason": "trailing stop hit"}))
@@ -155,6 +157,10 @@ def _portfolio(strategy_id, prices, score, cfg, ids, info_by_ticker, advisory):
 
 
 # ---------- trade primitives ----------
+def _tkr_of(iid, ids):
+    return next((k for k, v in ids.items() if v == iid), None)
+
+
 def _rec(strat, iid, signal, score, price, stop, size_pct, rationale, limit=None):
     return dict(strategy_id=strat, instrument_id=iid, date=TODAY, signal=signal,
                 composite_score=round(float(score), 4), confidence=round(float(score), 4),
@@ -168,7 +174,7 @@ def _sell(strat, iid, pos, price, action, trades):
     trades.append(dict(strategy_id=strat, instrument_id=iid, date=TODAY, action=action,
                        qty=pos["qty"], price=round(price, 4), cost=round(cost, 2),
                        reason=action.lower()))
-    upsert("paper_positions", [{"id": pos["id"], "status": "closed", "qty": 0}])
+    update("paper_positions", {"status": "closed", "qty": 0}, id=pos["id"])
     return val - cost
 
 
@@ -187,7 +193,8 @@ def _buy_with_rotation(strat, iid, shares, price, cash, held, ranked, ids, last,
         cost = _courtage(shares * price)
         trades.append(dict(strategy_id=strat, instrument_id=iid, date=TODAY, action="BUY",
                            qty=shares, price=round(price, 4), cost=round(cost, 2), reason="signal"))
-        upsert("paper_positions", [dict(strategy_id=strat, instrument_id=iid, qty=shares,
+        insert("paper_positions", [dict(strategy_id=strat, instrument_id=iid, qty=shares,
+                                        market=_MARKET.get(_tkr_of(iid, ids)),
                                         avg_price=round(price, 4), high_water=round(price, 4),
                                         opened_at=TODAY, status="open")])
         cash -= shares * price + cost
@@ -205,9 +212,10 @@ def _apply_user_actions(strat, ids, last, trades):
                         if p["status"] == "open"]
             if existing:
                 p = existing[0]
-                upsert("paper_positions", [{"id": p["id"], "qty": (p["qty"] or 0) + a["qty"]}])
+                update("paper_positions", {"qty": (p["qty"] or 0) + a["qty"]}, id=p["id"])
             else:
-                upsert("paper_positions", [dict(strategy_id=strat, instrument_id=iid, qty=a["qty"],
+                insert("paper_positions", [dict(strategy_id=strat, instrument_id=iid, qty=a["qty"],
+                                                market=_MARKET.get(t),
                                                 avg_price=price, high_water=price, opened_at=TODAY,
                                                 status="open")])
             if price:
