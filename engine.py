@@ -71,6 +71,9 @@ def _portfolio(strategy_id, prices, score, cfg, ids, info_by_ticker, advisory):
 
     regime = macro_regime()
     buy_th = cfg["buy_threshold"]
+    # advisory respects the portfolio_limits switch; race books always enforce
+    # limits so the comparison stays rules-consistent
+    limits_on = (not advisory) or bool(cfg.get("portfolio_limits", True))
     recs, trades = [], []
     cooldown = _recent_stop_outs(strategy_id, cfg["reentry_cooldown_days"])
     trades_today = 0
@@ -104,8 +107,8 @@ def _portfolio(strategy_id, prices, score, cfg, ids, info_by_ticker, advisory):
         pos = held.get(iid)
         weight_pct = 100 * (pos["qty"] * price) / total if (pos and total) else 0.0
 
-        # TRIM overweight
-        if pos and weight_pct > cfg["max_position_pct"] * 1.0:
+        # TRIM overweight (only when portfolio limits are on)
+        if limits_on and pos and weight_pct > cfg["max_position_pct"] * 1.0:
             recs.append(_rec(strategy_id, iid, "TRIM", sc, price, pos.get("stop_level"),
                              cfg["max_position_pct"],
                              {"reason": f"{weight_pct:.0f}% > {cfg['max_position_pct']}% target",
@@ -117,7 +120,7 @@ def _portfolio(strategy_id, prices, score, cfg, ids, info_by_ticker, advisory):
         if strong and (pos is None) and trades_today < cfg["max_trades_per_day"]:
             if iid in cooldown and sc < buy_th + 0.1:
                 continue                                   # cooldown unless much stronger
-            if info.get("ai_theme") and theme_pct >= cfg["max_theme_exposure_pct"]:
+            if limits_on and info.get("ai_theme") and theme_pct >= cfg["max_theme_exposure_pct"]:
                 recs.append(_rec(strategy_id, iid, "HOLD", sc, price, None, 0,
                                  {"reason": "blocked: AI theme cap", "blocked": True}))
                 continue
