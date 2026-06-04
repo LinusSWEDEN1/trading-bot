@@ -10,6 +10,7 @@ factors.build_features / compute_scores (no recomputation, no double fetch).
 import numpy as np
 import pandas as pd
 
+import config as C
 import factors
 from altdata import alt_tilt_by_ticker
 
@@ -28,7 +29,7 @@ def _rsi(close: pd.Series, n: int = 2) -> float:
 
 def score_all(prices: dict[str, pd.DataFrame], feats: pd.DataFrame,
               you_z: pd.DataFrame) -> dict[str, pd.Series]:
-    tickers = list(prices.keys())
+    tickers = [t for t in prices.keys() if t not in C.BENCHMARK_TICKERS]
     out: dict[str, pd.Series] = {}
 
     # you: your composite + any stored alt-data tilts (0 until populated)
