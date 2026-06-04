@@ -5,46 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Quant dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0f1115; --surface:#171a21; --line:#262b35; --txt:#e8eaed; --muted:#9aa0aa;
-    --accent:#5b9dff; --green:#4ec98a; --red:#ef6a6a; --amber:#e0a23c;
-    --sans:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace;
+    --bg:#ECE4D5; --surface:#FBF8F1; --line:#DCD1BD; --txt:#33302A; --muted:#8E8573;
+    --accent:#C15F3C; --green:#5E8C5A; --red:#B8503E; --amber:#A9791F;
+    --sans:'IBM Plex Sans',sans-serif; --mono:'IBM Plex Mono',monospace; --serif:'Fraunces',serif;
   }
   *{box-sizing:border-box} html,body{margin:0}
   body{background:var(--bg); color:var(--txt); font-family:var(--sans);
        max-width:440px; margin:0 auto; padding:16px; -webkit-font-smoothing:antialiased;}
-  h1{font-size:20px; font-weight:600; letter-spacing:-.01em; margin:0}
+  h1{font-family:var(--serif); font-size:23px; font-weight:600; letter-spacing:-.01em; margin:0}
   .num{font-family:var(--mono)}
   .row{display:flex; align-items:center; justify-content:space-between}
   .muted{color:var(--muted)} .small{font-size:12px} .mt{margin-top:18px}
   .banner{border-radius:10px; padding:10px 14px; font-size:13px; margin:12px 0}
-  .ok{background:rgba(78,201,138,.12); color:var(--green)}
-  .halt{background:rgba(239,106,106,.12); color:var(--red)}
-  .seg{display:flex; gap:6px; margin:8px 0 4px}
+  .ok{background:rgba(94,140,90,.14); color:#456b42}
+  .warn{background:rgba(169,121,31,.16); color:#7c5a13}
+  .halt{background:rgba(184,80,62,.15); color:#8a3424}
+  .seg, .tabs{display:flex; gap:6px}
+  .seg{margin:8px 0 4px} .tabs{margin:14px 0}
   .seg button, .tabs button{flex:1; background:var(--surface); color:var(--muted);
-       border:1px solid var(--line); border-radius:8px; padding:8px 0; font-family:var(--sans);
+       border:1px solid var(--line); border-radius:9px; padding:9px 0; font-family:var(--sans);
        font-size:13px; cursor:pointer}
-  .seg button.on{color:var(--txt); border-color:var(--accent)}
-  .tabs{display:flex; gap:6px; margin:14px 0}
-  .tabs button.on{color:var(--txt); background:#1d2230; border-color:var(--accent)}
-  .card{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  .seg button.on{color:var(--txt); border-color:var(--accent); border-width:1.5px}
+  .tabs button.on{color:var(--txt); background:#F3ECDD; border-color:var(--accent); border-width:1.5px}
+  .settbar{display:flex; align-items:center; justify-content:space-between;
+       background:var(--surface); border:1px solid var(--line); border-radius:9px;
+       padding:8px 14px; margin-bottom:12px; font-size:13px}
+  .sw{width:40px;height:23px;border-radius:12px;position:relative;cursor:pointer;background:#C9BFA9;transition:.15s}
+  .sw.on{background:var(--green)} .sw span{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.15s}
+  .sw.on span{left:20px}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:13px;
         padding:14px 16px; margin-bottom:10px}
-  .tag{font-size:11px; padding:2px 8px; border-radius:6px}
-  .b-buy{background:rgba(78,201,138,.15); color:var(--green)}
-  .b-sell{background:rgba(239,106,106,.15); color:var(--red)}
-  .b-hold{background:rgba(154,160,170,.15); color:var(--muted)}
-  .b-trim{background:rgba(224,162,60,.15); color:var(--amber)}
+  .tag{font-size:11px; padding:3px 9px; border-radius:6px; font-weight:500}
+  .b-buy{background:rgba(94,140,90,.16); color:#3c5c39}
+  .b-sell{background:rgba(184,80,62,.16); color:#7a2e22}
+  .b-hold{background:rgba(142,133,115,.18); color:#5c5647}
+  .b-trim{background:rgba(169,121,31,.18); color:#6e4e12}
+  .why{font-size:12px; color:var(--muted); line-height:1.55; margin:8px 0 0;
+       border-top:1px solid var(--line); padding-top:8px}
   .acts{display:flex; gap:8px; margin-top:12px}
-  .acts button{flex:1; background:#1d2230; color:var(--txt); border:1px solid var(--line);
-       border-radius:8px; padding:9px 0; font-size:13px; font-family:var(--sans); cursor:pointer}
+  .acts button{flex:1; background:#F1EADB; color:var(--txt); border:1px solid var(--line);
+       border-radius:9px; padding:9px 0; font-size:13px; font-family:var(--sans); cursor:pointer}
   .acts button:active{transform:scale(.98)}
-  .lead{display:flex; align-items:center; justify-content:space-between; padding:10px 12px;
-        border-radius:8px; margin-bottom:6px; background:var(--surface); border:1px solid var(--line)}
-  .lead.you{border-color:var(--accent)}
-  canvas{max-width:100%}
-  .hide{display:none}
+  .lead{display:flex; align-items:center; justify-content:space-between; padding:11px 13px;
+        border-radius:9px; margin-bottom:6px; background:var(--surface); border:1px solid var(--line)}
+  .lead.you{border-color:var(--accent); border-width:1.5px}
+  canvas{max-width:100%} .hide{display:none}
 </style>
 </head>
 <body>
@@ -64,6 +72,11 @@
     <button data-t="race">Race</button>
   </div>
 
+  <div class="settbar">
+    <span>Explain the numbers</span>
+    <span id="exsw" class="sw on"><span></span></span>
+  </div>
+
   <div id="today"></div>
   <div id="positions" class="hide"></div>
   <div id="screener" class="hide"></div>
@@ -75,80 +88,89 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// ---- 1. fill these two in (Supabase project settings -> API) ----
 const SUPABASE_URL = "https://agymmqtwdycrusjdqzlc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFneW1tcXR3ZHljcnVzamRxemxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NDE1MTUsImV4cCI6MjA5NjExNzUxNX0.VKZ_X9d0J7HRPx3LAvIKqxN4Q4BXGXN9Zl9LrdmPXQU";
-// -----------------------------------------------------------------
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const ADVISORY = "advisory";
 const RACE = ["you","magic_formula","rsi2","dual_momentum","canslim"];
 const NAMES = {you:"Your strategy",magic_formula:"Magic Formula",rsi2:"RSI-2",dual_momentum:"Dual Momentum",canslim:"CANSLIM"};
-let market = "US", instruments = {};
-const today = new Date().toISOString().slice(0,10);
-
-const cls = s => ({BUY:"b-buy",SELL:"b-sell",HOLD:"b-hold",TRIM:"b-trim"}[s]||"b-hold");
-const kr  = n => (n==null?"–":Math.round(n).toLocaleString("sv-SE"));
+let market="US", instruments={}, explain=(localStorage.getItem("explain")!=="0");
+const today=new Date().toISOString().slice(0,10);
+const cls=s=>({BUY:"b-buy",SELL:"b-sell",HOLD:"b-hold",TRIM:"b-trim"}[s]||"b-hold");
+const kr=n=>(n==null?"–":Math.round(n).toLocaleString("sv-SE"));
 
 async function loadInstruments(){
-  const {data} = await sb.from("instruments").select("*");
-  (data||[]).forEach(i => instruments[i.id]=i);
+  const {data}=await sb.from("instruments").select("*");
+  (data||[]).forEach(i=>instruments[i.id]=i);
 }
 
+function feedNum(s){const m=/^(\d+)\/(\d+)$/.exec(s||"");return m?[+m[1],+m[2]]:null;}
 async function status(){
-  const {data} = await sb.from("run_log").select("*").order("ran_at",{ascending:false}).limit(1);
-  const r = (data||[])[0], b = document.getElementById("banner"), cov = document.getElementById("coverage");
-  document.getElementById("status").textContent = r ? new Date(r.ran_at).toLocaleString() : "no runs yet";
-  if(!r){ b.textContent="No runs recorded yet."; cov.textContent=""; return; }
-  if(r.halted){ b.className="banner halt"; b.textContent="⚠ Halted: "+(r.halt_reason||"unknown"); cov.textContent=""; return; }
-  const f = r.feeds||{};
-  cov.textContent = "used " + Object.entries(f).map(([k,v])=>k.replace("alt:","")+" "+v).join(" · ");
-  if(r.ok){ b.className="banner ok"; b.textContent="System healthy · all metrics available"; cov.style.color="var(--muted)"; }
-  else { b.className="banner"; b.style.background="rgba(224,162,60,.12)"; b.style.color="var(--amber)";
-         b.textContent="Running on partial data — skipped sources shown below"; cov.style.color="var(--amber)"; }
+  const {data}=await sb.from("run_log").select("*").order("ran_at",{ascending:false}).limit(1);
+  const r=(data||[])[0], b=document.getElementById("banner"), cov=document.getElementById("coverage");
+  document.getElementById("status").textContent=r?new Date(r.ran_at).toLocaleString("sv-SE"):"no runs yet";
+  if(!r){b.textContent="No runs recorded yet.";cov.textContent="";return;}
+  if(r.halted){b.className="banner halt";b.textContent="⚠ Halted: "+(r.halt_reason||"unknown");cov.textContent="";return;}
+  const f=r.feeds||{}, p=feedNum(f.prices), fu=feedNum(f.fundamentals);
+  cov.textContent="used "+Object.entries(f).map(([k,v])=>k.replace("alt:","")+" "+v).join(" · ");
+  if(p && p[0]<p[1]){ b.className="banner warn"; b.textContent="Running on partial prices — "+(p[1]-p[0])+" name(s) skipped today"; }
+  else if(fu && fu[0]<fu[1]){ b.className="banner ok"; b.textContent="System healthy · "+(fu[1]-fu[0])+" fundamental(s) thin, scored neutral"; }
+  else { b.className="banner ok"; b.textContent="System healthy · all metrics available"; }
+}
+
+function caption(r){
+  const rat=r.rationale||{};
+  if(r.signal==="BUY"){
+    let c="Buy up to "+kr(r.limit_price)+" — a limit order, so it fills only at that price or lower. ";
+    c+="Size "+(r.target_size_pct||"")+"% of the book"+(rat.chunky?" (chunky — one share is large for your target, but your call). ":". ");
+    c+="Stop "+kr(r.stop_level)+" — sells automatically if it falls that far from its high. ";
+    c+="Score "+(r.composite_score?.toFixed(2))+" — combined signal strength (0–1; acts above ~0.60).";
+    return c;
+  }
+  if(r.signal==="TRIM") return "This position is above your "+(r.target_size_pct||5)+"% size target — consider reducing toward it. It's a flag, not a rush; tap when you act. Score "+(r.composite_score?.toFixed(2))+" is how strong the stock still ranks.";
+  if(r.signal==="SELL") return "Trailing stop hit — it fell from its high by your stop distance, so the rule says exit.";
+  return "Holding — no change today. Score "+(r.composite_score?.toFixed(2))+" (0–1).";
 }
 
 async function today_tab(){
-  const el = document.getElementById("today"); el.innerHTML="";
-  const {data} = await sb.from("recommendations").select("*")
-    .eq("strategy_id",ADVISORY).eq("date",today);
-  const recs = (data||[]).filter(r => (instruments[r.instrument_id]||{}).market===market)
-                         .sort((a,b)=>b.composite_score-a.composite_score);
-  if(!recs.length){ el.innerHTML='<p class="muted small">No recommendations for '+market+' today.</p>'; return; }
+  const el=document.getElementById("today"); el.innerHTML="";
+  const {data}=await sb.from("recommendations").select("*").eq("strategy_id",ADVISORY).eq("date",today);
+  const recs=(data||[]).filter(r=>(instruments[r.instrument_id]||{}).market===market)
+                       .sort((a,b)=>b.composite_score-a.composite_score);
+  if(!recs.length){el.innerHTML='<p class="muted small">No recommendations for '+market+' today.</p>';return;}
   recs.forEach(r=>{
-    const i = instruments[r.instrument_id]||{}, rat=r.rationale||{};
+    const i=instruments[r.instrument_id]||{};
     const card=document.createElement("div"); card.className="card";
-    let warn = rat.chunky ? '<p class="small" style="color:var(--amber)">⚠ chunky — one share exceeds your target, but it\'s your call</p>' : "";
-    if(rat.blocked) warn = '<p class="small" style="color:var(--amber)">blocked: AI theme cap reached</p>';
-    card.innerHTML =
+    card.innerHTML=
       '<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
       '<span class="tag '+cls(r.signal)+'">'+r.signal+'</span></div>'+
-      '<p class="small muted" style="margin:6px 0">score <span class="num">'+(r.composite_score?.toFixed(2))+
+      '<p class="small muted" style="margin:6px 0 0">score <span class="num">'+(r.composite_score?.toFixed(2))+
         '</span> · limit <span class="num">'+kr(r.limit_price)+'</span> · stop <span class="num">'+kr(r.stop_level)+'</span></p>'+
-      warn +
-      (['BUY','SELL','TRIM'].includes(r.signal) ?
+      (explain?'<p class="why">'+caption(r)+'</p>':"")+
+      (['BUY','SELL','TRIM'].includes(r.signal)?
         '<div class="acts"><button onclick="act('+r.instrument_id+",'done',1)\">I did it</button>"+
-        '<button onclick="act('+r.instrument_id+",'skipped',0)\">Skipped</button></div>" : "");
+        '<button onclick="act('+r.instrument_id+",'skipped',0)\">Skipped</button></div>":"");
     el.appendChild(card);
   });
 }
-async function act(iid, acted, qty){
-  await sb.from("user_actions").insert({instrument_id:iid, rec_date:today, acted, qty});
-  alert(acted==="done" ? "Logged — holdings will update on the next run." : "Marked as skipped.");
+async function act(iid,acted,qty){
+  await sb.from("user_actions").insert({instrument_id:iid,rec_date:today,acted,qty});
+  alert(acted==="done"?"Logged — holdings update on the next run.":"Marked as skipped.");
 }
 
 async function positions_tab(){
-  const el = document.getElementById("positions"); el.innerHTML="";
-  const {data} = await sb.from("paper_positions").select("*")
+  const el=document.getElementById("positions"); el.innerHTML="";
+  const {data}=await sb.from("paper_positions").select("*")
     .eq("strategy_id",ADVISORY).eq("status","open").eq("market",market);
   (data||[]).forEach(p=>{
     const i=instruments[p.instrument_id]||{};
-    const dist = (p.stop_level && p.high_water) ? Math.round(100*(p.high_water-p.stop_level)/p.high_water) : null;
-    const card=document.createElement("div"); card.className="card";
-    card.innerHTML='<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
+    const dist=(p.stop_level&&p.high_water)?Math.round(100*(p.high_water-p.stop_level)/p.high_water):null;
+    const c=document.createElement("div"); c.className="card";
+    c.innerHTML='<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
       '<div style="text-align:right"><div class="num">'+(p.qty||0)+' sh</div>'+
-      '<div class="small '+(dist!=null&&dist<5?"":"muted")+'" style="'+(dist!=null&&dist<5?"color:var(--amber)":"")+'">'+
+      '<div class="small" style="'+(dist!=null&&dist<5?"color:var(--amber)":"color:var(--muted)")+'">'+
       (dist!=null?dist+"% to stop":"")+'</div></div></div>';
-    el.appendChild(card);
+    el.appendChild(c);
   });
   if(!el.innerHTML) el.innerHTML='<p class="muted small">No '+market+' positions.</p>';
 }
@@ -158,52 +180,57 @@ async function screener_tab(){
   const {data}=await sb.from("factor_scores").select("*").eq("date",today).order("composite",{ascending:false});
   (data||[]).filter(s=>(instruments[s.instrument_id]||{}).market===market).forEach(s=>{
     const i=instruments[s.instrument_id]||{};
-    const card=document.createElement("div"); card.className="lead";
-    card.innerHTML='<span>'+(i.name||"")+' <span class="small muted">'+(i.ticker||"")+'</span></span>'+
+    const d=document.createElement("div"); d.className="lead";
+    d.innerHTML='<span>'+(i.name||"")+' <span class="small muted">'+(i.ticker||"")+'</span></span>'+
       '<span class="num">'+(s.composite?.toFixed(2)??"–")+'</span>';
-    el.appendChild(card);
+    el.appendChild(d);
   });
 }
 
 async function race_tab(){
   const board=document.getElementById("board"); board.innerHTML="";
-  const series={}, latest={};
+  const series={},latest={};
   for(const s of RACE){
     const {data}=await sb.from("portfolio_history").select("*")
-      .eq("strategy_id",s).order("date",{ascending:true});
-    const agg={};
-    (data||[]).forEach(r=>{agg[r.date]=(agg[r.date]||0)+(r.value||0)+(r.cash||0);});
-    series[s]=Object.entries(agg).map(([d,v])=>({x:d,y:v}));
-    latest[s]=series[s].length?series[s][series[s].length-1].y:0;
+      .eq("strategy_id",s).eq("market",market).order("date",{ascending:true});
+    const pts=(data||[]).map(r=>({x:r.date,y:(r.value||0)+(r.cash||0)}));
+    const base=pts.length?pts[0].y:0;
+    series[s]=base?pts.map(p=>({x:p.x,y:100*p.y/base})):pts;   // indexed to 100
+    latest[s]=series[s].length?series[s][series[s].length-1].y:100;
   }
-  const colors={you:"#5b9dff",magic_formula:"#4ec98a",rsi2:"#e0a23c",dual_momentum:"#b08bff",canslim:"#ef6a6a"};
+  const colors={you:"#C15F3C",magic_formula:"#5E8C5A",rsi2:"#A9791F",dual_momentum:"#8A5A8C",canslim:"#5A7A8C"};
   new Chart(document.getElementById("equity"),{type:"line",
     data:{datasets:RACE.map(s=>({label:NAMES[s],data:series[s],borderColor:colors[s],
-      borderWidth:s==="you"?2.5:1.5,pointRadius:0,tension:.25,
-      borderDash:s==="you"?[]:[4,3]}))},
+      borderWidth:s==="you"?2.5:1.5,pointRadius:0,tension:.25,borderDash:s==="you"?[]:[4,3]}))},
     options:{responsive:true,maintainAspectRatio:false,parsing:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{type:"category",ticks:{color:"#9aa0aa",maxTicksLimit:5}},
-              y:{ticks:{color:"#9aa0aa"}}}}});
+      plugins:{legend:{display:false},title:{display:true,text:market+" — indexed to 100 at start",
+        color:"#8E8573",font:{size:11}}},
+      scales:{x:{type:"category",ticks:{color:"#8E8573",maxTicksLimit:5}},y:{ticks:{color:"#8E8573"}}}}});
   Object.entries(latest).sort((a,b)=>b[1]-a[1]).forEach(([s,v],i)=>{
     const d=document.createElement("div"); d.className="lead"+(s==="you"?" you":"");
-    d.innerHTML='<span>'+(i+1)+'. '+NAMES[s]+'</span><span class="num">'+kr(v)+' kr</span>';
+    const ret=(v-100); const sign=ret>=0?"+":"";
+    d.innerHTML='<span>'+(i+1)+'. '+NAMES[s]+'</span><span class="num" style="color:'+
+      (ret>=0?"var(--green)":"var(--red)")+'">'+sign+ret.toFixed(1)+'%</span>';
     board.appendChild(d);
   });
 }
 
 function show(tab){
-  ["today","positions","screener","race"].forEach(t=>
-    document.getElementById(t).classList.toggle("hide",t!==tab));
+  ["today","positions","screener","race"].forEach(t=>document.getElementById(t).classList.toggle("hide",t!==tab));
   ({today:today_tab,positions:positions_tab,screener:screener_tab,race:race_tab}[tab])();
 }
-document.getElementById("tabs").onclick=e=>{ if(e.target.dataset.t){
-  [...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b===e.target));
-  show(e.target.dataset.t); }};
-document.getElementById("market").onclick=e=>{ if(e.target.dataset.m){
+document.getElementById("tabs").onclick=e=>{if(e.target.dataset.t){
+  [...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b===e.target)); show(e.target.dataset.t);}};
+document.getElementById("market").onclick=e=>{if(e.target.dataset.m){
   market=e.target.dataset.m;
   [...e.currentTarget.children].forEach(b=>b.classList.toggle("on",b===e.target));
-  show(document.querySelector("#tabs .on").dataset.t); }};
+  show(document.querySelector("#tabs .on").dataset.t);}};
+document.getElementById("exsw").onclick=e=>{
+  explain=!explain; localStorage.setItem("explain",explain?"1":"0");
+  e.currentTarget.classList.toggle("on",explain);
+  if(document.querySelector("#tabs .on").dataset.t==="today") today_tab();
+};
+if(!explain) document.getElementById("exsw").classList.remove("on");
 
 (async()=>{ await loadInstruments(); await status(); show("today"); })();
 </script>
