@@ -74,7 +74,14 @@ INSTRUMENTS = [
     dict(ticker="NFLX", yf_symbol="NFLX", name="Netflix",          market="US", currency="USD", theme="media",      ai_theme=False, qty=0),
     dict(ticker="QCOM", yf_symbol="QCOM", name="Qualcomm",         market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
     dict(ticker="INTC", yf_symbol="INTC", name="Intel",            market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
+
+    # --- benchmarks: priced & charted, never scored, recommended, or traded ---
+    dict(ticker="GSPC", yf_symbol="^GSPC", name="S&P 500",       market="US",     currency="USD", theme="benchmark", ai_theme=False, qty=0, benchmark=True),
+    dict(ticker="IXIC", yf_symbol="^IXIC", name="Nasdaq Comp.",  market="US",     currency="USD", theme="benchmark", ai_theme=False, qty=0, benchmark=True),
+    dict(ticker="OMX",  yf_symbol="^OMX",  name="OMX Stockholm 30", market="NORDIC", currency="SEK", theme="benchmark", ai_theme=False, qty=0, benchmark=True),
 ]
+
+BENCHMARK_TICKERS = {"GSPC", "IXIC", "OMX"}
 
 ADVISORY_ID = "advisory"          # your real, human-confirmed book
 RACE_STRATEGIES = ["you", "magic_formula", "rsi2", "dual_momentum", "canslim"]
