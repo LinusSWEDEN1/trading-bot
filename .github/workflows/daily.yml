@@ -1,0 +1,45 @@
+name: daily-trading-run
+
+on:
+  schedule:
+    - cron: "0 6 * * 2-6"      # 06:00 UTC Tue–Sat (after US + Nordic close)
+  workflow_dispatch:
+    inputs:
+      setup:
+        description: "Run one-time setup (seed DB) instead of the daily loop"
+        type: boolean
+        default: false
+
+# keeps the scheduled workflow from being disabled after 60 idle days:
+# a weekly no-op commit is added by the keepalive job below.
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Run pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          if [ "${{ inputs.setup }}" = "true" ]; then
+            python run.py --setup
+          else
+            python run.py
+          fi
+
+  keepalive:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    needs: run
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name "bot"
+          git config user.email "bot@users.noreply.github.com"
+          date > .keepalive && git add .keepalive
+          git commit -m "keepalive" && git push || echo "nothing to commit"
