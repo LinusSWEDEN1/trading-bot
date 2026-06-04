@@ -36,7 +36,44 @@ INSTRUMENTS = [
     dict(ticker="IREN", yf_symbol="IREN", name="IREN",                 market="US", currency="USD", theme="ai_cloud",    ai_theme=True,  qty=0),
     dict(ticker="VRT",  yf_symbol="VRT",  name="Vertiv",               market="US", currency="USD", theme="datacenter",  ai_theme=True,  qty=0),
     dict(ticker="ANET", yf_symbol="ANET", name="Arista Networks",      market="US", currency="USD", theme="datacenter",  ai_theme=True,  qty=0),
-    # OMXS30 + large Nasdaq members are appended at runtime by fetch_index_members()
+
+    # --- broader universe for discovery (not held, scored daily) ---
+    # Nordic large-caps (OMXS30-ish)
+    dict(ticker="VOLV-B",  yf_symbol="VOLV-B.ST",  name="Volvo B",            market="NORDIC", currency="SEK", theme="industrial", ai_theme=False, qty=0),
+    dict(ticker="ERIC-B",  yf_symbol="ERIC-B.ST",  name="Ericsson B",         market="NORDIC", currency="SEK", theme="telecom_eq", ai_theme=False, qty=0),
+    dict(ticker="ATCO-B",  yf_symbol="ATCO-B.ST",  name="Atlas Copco B",      market="NORDIC", currency="SEK", theme="industrial", ai_theme=False, qty=0),
+    dict(ticker="HM-B",    yf_symbol="HM-B.ST",    name="Hennes & Mauritz B", market="NORDIC", currency="SEK", theme="retail",     ai_theme=False, qty=0),
+    dict(ticker="SAND",    yf_symbol="SAND.ST",    name="Sandvik",            market="NORDIC", currency="SEK", theme="industrial", ai_theme=False, qty=0),
+    dict(ticker="SEB-A",   yf_symbol="SEB-A.ST",   name="SEB A",              market="NORDIC", currency="SEK", theme="bank",       ai_theme=False, qty=0),
+    dict(ticker="SWED-A",  yf_symbol="SWED-A.ST",  name="Swedbank A",         market="NORDIC", currency="SEK", theme="bank",       ai_theme=False, qty=0),
+    dict(ticker="SHB-A",   yf_symbol="SHB-A.ST",   name="Handelsbanken A",    market="NORDIC", currency="SEK", theme="bank",       ai_theme=False, qty=0),
+    dict(ticker="AZN-ST",  yf_symbol="AZN.ST",     name="AstraZeneca",        market="NORDIC", currency="SEK", theme="pharma",     ai_theme=False, qty=0),
+    dict(ticker="ESSITY-B",yf_symbol="ESSITY-B.ST",name="Essity B",           market="NORDIC", currency="SEK", theme="consumer",   ai_theme=False, qty=0),
+    dict(ticker="TELIA",   yf_symbol="TELIA.ST",   name="Telia",              market="NORDIC", currency="SEK", theme="telecom",    ai_theme=False, qty=0),
+    dict(ticker="HEXA-B",  yf_symbol="HEXA-B.ST",  name="Hexagon B",          market="NORDIC", currency="SEK", theme="tech",       ai_theme=True,  qty=0),
+    dict(ticker="ALFA",    yf_symbol="ALFA.ST",    name="Alfa Laval",         market="NORDIC", currency="SEK", theme="industrial", ai_theme=False, qty=0),
+    dict(ticker="EVO",     yf_symbol="EVO.ST",     name="Evolution",          market="NORDIC", currency="SEK", theme="gaming",     ai_theme=False, qty=0),
+    dict(ticker="ASSA-B",  yf_symbol="ASSA-B.ST",  name="Assa Abloy B",       market="NORDIC", currency="SEK", theme="industrial", ai_theme=False, qty=0),
+    dict(ticker="EPI-A",   yf_symbol="EPI-A.ST",   name="Epiroc A",           market="NORDIC", currency="SEK", theme="industrial", ai_theme=False, qty=0),
+    dict(ticker="NDA-SE",  yf_symbol="NDA-SE.ST",  name="Nordea Bank",        market="NORDIC", currency="SEK", theme="bank",       ai_theme=False, qty=0),
+
+    # Large US / Nasdaq, AI-weighted
+    dict(ticker="MSFT", yf_symbol="MSFT", name="Microsoft",        market="US", currency="USD", theme="ai_cloud",   ai_theme=True,  qty=0),
+    dict(ticker="GOOGL",yf_symbol="GOOGL",name="Alphabet A",       market="US", currency="USD", theme="ai_software",ai_theme=True,  qty=0),
+    dict(ticker="AMZN", yf_symbol="AMZN", name="Amazon",           market="US", currency="USD", theme="ai_cloud",   ai_theme=True,  qty=0),
+    dict(ticker="META", yf_symbol="META", name="Meta Platforms",   market="US", currency="USD", theme="ai_software",ai_theme=True,  qty=0),
+    dict(ticker="AVGO", yf_symbol="AVGO", name="Broadcom",         market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
+    dict(ticker="AMD",  yf_symbol="AMD",  name="AMD",              market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
+    dict(ticker="MU",   yf_symbol="MU",   name="Micron",           market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
+    dict(ticker="MRVL", yf_symbol="MRVL", name="Marvell",          market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
+    dict(ticker="SMCI", yf_symbol="SMCI", name="Super Micro",      market="US", currency="USD", theme="datacenter", ai_theme=True,  qty=0),
+    dict(ticker="SNOW", yf_symbol="SNOW", name="Snowflake",        market="US", currency="USD", theme="ai_software",ai_theme=True,  qty=0),
+    dict(ticker="DDOG", yf_symbol="DDOG", name="Datadog",          market="US", currency="USD", theme="ai_software",ai_theme=True,  qty=0),
+    dict(ticker="NOW",  yf_symbol="NOW",  name="ServiceNow",       market="US", currency="USD", theme="ai_software",ai_theme=True,  qty=0),
+    dict(ticker="ORCL", yf_symbol="ORCL", name="Oracle",           market="US", currency="USD", theme="ai_cloud",   ai_theme=True,  qty=0),
+    dict(ticker="NFLX", yf_symbol="NFLX", name="Netflix",          market="US", currency="USD", theme="media",      ai_theme=False, qty=0),
+    dict(ticker="QCOM", yf_symbol="QCOM", name="Qualcomm",         market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
+    dict(ticker="INTC", yf_symbol="INTC", name="Intel",            market="US", currency="USD", theme="ai_semi",    ai_theme=True,  qty=0),
 ]
 
 ADVISORY_ID = "advisory"          # your real, human-confirmed book
