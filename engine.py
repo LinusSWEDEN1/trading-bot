@@ -13,6 +13,7 @@ daily close; benchmark_value is left for a later index feed; cooldown reads the
 recent paper_trades log.
 """
 import datetime as dt
+import math
 import numpy as np
 import pandas as pd
 
@@ -29,8 +30,10 @@ def _atr_pct(df: pd.DataFrame, n: int = 14) -> float:
     h, l, c = df["High"], df["Low"], df["Close"].shift()
     tr = pd.concat([h - l, (h - c).abs(), (l - c).abs()], axis=1).max(axis=1)
     atr = tr.tail(n).mean()
-    last = float(df["Close"].iloc[-1])
-    return float(atr / last) if last else 0.05
+    close = df["Close"].dropna()
+    last = float(close.iloc[-1]) if len(close) else 0.0
+    pct = (atr / last) if (last and math.isfinite(atr)) else None
+    return pct if (pct is not None and math.isfinite(pct)) else 0.05
 
 
 def _courtage(value: float, liquidity: str = "mid") -> float:
@@ -40,7 +43,14 @@ def _courtage(value: float, liquidity: str = "mid") -> float:
 
 
 def _last_close(prices: dict[str, pd.DataFrame]) -> dict[str, float]:
-    return {t: float(df["Close"].iloc[-1]) for t, df in prices.items() if len(df)}
+    out = {}
+    for t, df in prices.items():
+        c = df["Close"].dropna()              # last *valid* close, skip NaN bars
+        if len(c):
+            v = float(c.iloc[-1])
+            if math.isfinite(v):
+                out[t] = v
+    return out
 
 
 def _recent_stop_outs(strategy_id: str, days: int) -> set[int]:
@@ -81,11 +91,13 @@ def _portfolio(strategy_id, prices, score, cfg, ids, info_by_ticker, advisory):
     # 1) update trailing stops on held names; fire stops
     for iid, p in list(held.items()):
         t = tkr(iid)
-        if t not in prices:
+        if t not in last:                     # no valid price today -> skip the name
             continue
         price = last[t]
         hw = max(p.get("high_water") or price, price)
         stop = hw * (1 - cfg["trailing_stop_atr_mult"] * _atr_pct(prices[t]))
+        if not math.isfinite(hw) or not math.isfinite(stop):
+            continue
         update("paper_positions",
                {"high_water": round(hw, 4), "stop_level": round(stop, 4)},
                id=p["id"])
