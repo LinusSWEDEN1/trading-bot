@@ -9,6 +9,7 @@ not the whole run) and recorded in the coverage report. Only a catastrophic
 price loss (less than half the universe) halts the run.
 """
 import datetime as dt
+import math
 import pandas as pd
 import yfinance as yf
 
@@ -94,7 +95,8 @@ def ingest_prices(lookback_days: int = 420):
 
 def _f(x):
     try:
-        return float(x)
+        v = float(x)
+        return v if math.isfinite(v) else None   # NaN/inf -> null (valid JSON)
     except (TypeError, ValueError):
         return None
 
