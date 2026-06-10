@@ -48,6 +48,8 @@
   .acts button:active{transform:scale(.98)}
   .lead{display:flex; align-items:center; justify-content:space-between; padding:11px 13px; border-radius:9px; margin-bottom:6px; background:var(--surface); border:1px solid var(--line)}
   .lead.you{border-color:var(--accent); border-width:1.5px}
+  select, input[type=number]{background:var(--surface); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 9px; font-family:var(--sans); font-size:13px}
+  .mini{background:#F1EADB; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 12px; font-size:13px; font-family:var(--sans); cursor:pointer}
   canvas{max-width:100%} .hide{display:none}
 </style>
 </head>
@@ -158,17 +160,27 @@ function recCard(r,i,fs){
 
 async function today_tab(){
   const el=document.getElementById("today"); el.innerHTML="";
-  const {data}=await sb.from("recommendations").select("*").eq("strategy_id",ADVISORY).eq("date",today);
+  const recData=(await sb.from("recommendations").select("*").eq("strategy_id",ADVISORY).eq("date",today)).data||[];
   const fsRows=(await sb.from("factor_scores").select("*").eq("date",today)).data||[];
   const fsMap={}; fsRows.forEach(s=>fsMap[s.instrument_id]=s);
-  const all=data||[]; let any=false;
+  let shown=false;
   for(const [mk,label] of MARKETS){
-    const recs=all.filter(r=>(instruments[r.instrument_id]||{}).market===mk).sort((a,b)=>b.composite_score-a.composite_score);
-    if(!recs.length) continue; any=true;
+    const recs=recData.filter(r=>(instruments[r.instrument_id]||{}).market===mk).sort((a,b)=>b.composite_score-a.composite_score);
+    const recIds=new Set(recs.map(r=>r.instrument_id));
+    const watch=fsRows.filter(s=>(instruments[s.instrument_id]||{}).market===mk && !recIds.has(s.instrument_id))
+      .sort((a,b)=>(b.composite??-9)-(a.composite??-9)).slice(0,5);
+    if(!recs.length && !watch.length) continue;
+    shown=true;
     el.insertAdjacentHTML("beforeend", mhead(label));
     recs.forEach(r=>{ const c=document.createElement("div"); c.className="card"; c.innerHTML=recCard(r,instruments[r.instrument_id]||{},fsMap[r.instrument_id]); el.appendChild(c); });
+    if(watch.length){
+      el.insertAdjacentHTML("beforeend",'<div class="small muted" style="margin:6px 0 6px">Watching - closest to a signal'+(explain?' (highest factor strength, not yet a buy)':'')+'</div>');
+      watch.forEach(s=>{ const i=instruments[s.instrument_id]||{}; const d=document.createElement("div"); d.className="lead";
+        d.innerHTML='<span>'+(i.name||"")+' <span class="small muted">'+(i.ticker||"")+'</span></span><span class="num">'+(s.composite!=null?s.composite.toFixed(2):"-")+'</span>';
+        el.appendChild(d); });
+    }
   }
-  if(!any) el.innerHTML='<p class="muted small">No recommendations today.</p>';
+  if(!shown) el.innerHTML='<p class="muted small">Nothing scored today.</p>';
 }
 async function act(iid,acted,qty){
   await sb.from("user_actions").insert({instrument_id:iid,rec_date:today,acted,qty});
@@ -178,23 +190,54 @@ async function act(iid,acted,qty){
 async function positions_tab(){
   const el=document.getElementById("positions"); el.innerHTML="";
   const {data}=await sb.from("paper_positions").select("*").eq("strategy_id",ADVISORY).eq("status","open");
-  const all=data||[]; let any=false;
+  const all=data||[];
+  const opts=Object.values(instruments).filter(x=>x.theme!=="benchmark")
+    .sort((a,b)=>(a.name||"").localeCompare(b.name||""))
+    .map(x=>'<option value="'+x.id+'">'+x.name+' ('+x.ticker+')</option>').join("");
+  el.insertAdjacentHTML("beforeend",
+    '<div class="card"><div class="small muted" style="margin-bottom:8px">Add or adjust a holding to match your real trades</div>'+
+    '<div style="display:flex; gap:8px; align-items:center"><select id="addsel" style="flex:1; min-width:0">'+opts+'</select>'+
+    '<input id="addqty" type="number" min="0" placeholder="sh" style="width:62px">'+
+    '<button class="mini" onclick="addPos()">Add</button></div></div>');
   for(const [mk,label] of MARKETS){
     const ps=all.filter(p=>p.market===mk);
-    if(!ps.length) continue; any=true;
+    if(!ps.length) continue;
     el.insertAdjacentHTML("beforeend", mhead(label));
-    if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted" style="margin:0 0 8px">Number on the right = how far price can fall from its recent high before the trailing stop sells. Amber means it is close.</p>');
+    if(explain) el.insertAdjacentHTML("beforeend",'<p class="small muted" style="margin:0 0 8px">Edit the share count to match your real trades. Distance-to-stop is how far price can fall from its high before the trailing stop sells (amber = close).</p>');
     ps.forEach(p=>{
       const i=instruments[p.instrument_id]||{};
       const dist=(p.stop_level&&p.high_water)?Math.round(100*(p.high_water-p.stop_level)/p.high_water):null;
       const c=document.createElement("div"); c.className="card";
       c.innerHTML='<div class="row"><div><b>'+(i.name||"")+'</b> <span class="small muted">'+(i.ticker||"")+'</span></div>'+
-        '<div style="text-align:right"><div class="num">'+(p.qty||0)+' sh</div>'+
-        '<div class="small" style="'+(dist!=null&&dist<5?"color:var(--amber)":"color:var(--muted)")+'">'+(dist!=null?dist+"% to stop":"")+'</div></div></div>';
+        '<div class="small" style="'+(dist!=null&&dist<5?"color:var(--amber)":"color:var(--muted)")+'">'+(dist!=null?dist+"% to stop":"")+'</div></div>'+
+        '<div style="display:flex; gap:8px; align-items:center; margin-top:10px">'+
+        '<input type="number" min="0" value="'+(p.qty||0)+'" id="q_'+p.id+'" style="width:78px"> <span class="small muted">sh</span>'+
+        '<button class="mini" style="margin-left:auto" onclick="savePos('+p.id+')">Save</button>'+
+        '<button class="mini" onclick="removePos('+p.id+')">Remove</button></div>';
       el.appendChild(c);
     });
   }
-  if(!any) el.innerHTML='<p class="muted small">No open positions.</p>';
+  if(!all.length) el.insertAdjacentHTML("beforeend",'<p class="muted small">No open positions. Add one above.</p>');
+}
+async function savePos(id){
+  const v=parseFloat(document.getElementById("q_"+id).value);
+  if(isNaN(v)||v<0){alert("Enter a valid share count.");return;}
+  await sb.from("paper_positions").update(v===0?{qty:0,status:"closed"}:{qty:v}).eq("id",id);
+  positions_tab();
+}
+async function removePos(id){
+  await sb.from("paper_positions").update({qty:0,status:"closed"}).eq("id",id);
+  positions_tab();
+}
+async function addPos(){
+  const iid=parseInt(document.getElementById("addsel").value,10);
+  const v=parseFloat(document.getElementById("addqty").value);
+  if(isNaN(v)||v<=0){alert("Enter a share count.");return;}
+  const inst=instruments[iid]||{};
+  const ex=((await sb.from("paper_positions").select("*").eq("strategy_id",ADVISORY).eq("instrument_id",iid).eq("status","open")).data)||[];
+  if(ex.length) await sb.from("paper_positions").update({qty:(ex[0].qty||0)+v}).eq("id",ex[0].id);
+  else await sb.from("paper_positions").insert({strategy_id:ADVISORY,instrument_id:iid,market:inst.market,qty:v,status:"open",opened_at:today});
+  positions_tab();
 }
 
 async function screener_tab(){
